@@ -11,7 +11,7 @@ export interface LoginInput {
   password: string;
 }
 
-/** Esquema de validación para el registro de un usuario. */
+/** Body de POST /auth/register. */
 export const registerSchema: JSONSchemaType<RegistroInput> = {
   type: 'object',
   properties: {
@@ -23,7 +23,7 @@ export const registerSchema: JSONSchemaType<RegistroInput> = {
   additionalProperties: false,
 };
 
-/** Esquema de validación para el inicio de sesión. */
+/** Body de POST /auth/login. */
 export const loginSchema: JSONSchemaType<LoginInput> = {
   type: 'object',
   properties: {

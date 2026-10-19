@@ -2,20 +2,16 @@ import { Pool } from 'pg';
 import { config } from '../config/env';
 
 /**
- * Pool de conexiones a PostgreSQL.
- *
- * Se crea una única vez (módulo) y es reutilizado por todos los repositorios,
- * evitando abrir una conexión nueva por cada petición.
+ * Pool compartido por todos los repositorios.
+ * Se crea al importar el módulo, no en cada petición.
  */
 export const pool = new Pool({
   connectionString: config.urlBaseDatos,
 });
 
 /**
- * Garantiza que las tablas necesarias existan en la base de datos.
- *
- * Se ejecuta una sola vez al arrancar la aplicación y usa sentencias
- * idempotentes (`IF NOT EXISTS`) para no duplicar estructura.
+ * Deja las tablas listas al arrancar.
+ * Los IF NOT EXISTS permiten ejecutarlo varias veces sin romper nada.
  */
 export async function inicializarBaseDatos(): Promise<void> {
   await pool.query(`

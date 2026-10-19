@@ -1,11 +1,9 @@
 /**
- * Clase base para todos los errores controlados de la aplicación.
- *
- * Permite asociar un código de estado HTTP a un error para que el
- * middleware centralizado de errores pueda responder de forma consistente.
+ * Base de los errores que la API sí controla.
+ * Cada subclase trae su código HTTP y el middleware de errores lo respeta.
  */
 export class AppError extends Error {
-  /** Código de estado HTTP asociado al error. */
+  /** Código HTTP que se enviará. */
   public readonly statusCode: number;
 
   constructor(statusCode: number, message: string) {

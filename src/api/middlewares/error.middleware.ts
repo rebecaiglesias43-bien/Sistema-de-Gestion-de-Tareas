@@ -2,12 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../../errors';
 
 /**
- * Middleware centralizado de manejo de errores.
+ * Último middleware de la cadena: traduce los errores a JSON.
  *
- * Convierte cualquier error lanzado por la aplicación en una respuesta JSON
- * consistente con la forma `{ error: { mensaje, ... } }`. Los errores
- * controlados (`AppError`) usan su código de estado; el resto se trata como
- * un error interno (500) y se registra en la consola.
+ * Los AppError salen con su código; cualquier otra cosa se registra y
+ * se responde como 500 para no filtrar detalles internos.
  */
 export function errorHandler(
   err: unknown,

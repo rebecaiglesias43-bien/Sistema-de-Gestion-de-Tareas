@@ -26,7 +26,7 @@ const opciones: swaggerJSDoc.Options = {
 
 const especificacion = swaggerJSDoc(opciones);
 
-/** Monta Swagger UI en `/api-docs` y sirve la especificación en JSON. */
+/** Deja Swagger UI en /api-docs y la especificación en JSON. */
 export function setupSwagger(app: Express): void {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(especificacion));
 }

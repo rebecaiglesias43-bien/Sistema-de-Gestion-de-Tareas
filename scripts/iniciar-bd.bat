@@ -2,9 +2,7 @@
 setlocal
 title Iniciar PostgreSQL (desarrollo)
 
-rem Ubica los binarios de PostgreSQL:
-rem   1) variable de entorno PGSQL_HOME
-rem   2) rutas habituales del instalador oficial
+rem Primero PGSQL_HOME; si no esta, buscamos en las rutas tipicas del instalador.
 if defined PGSQL_HOME goto :encontrado
 
 for %%V in (18 17 16 15 14) do (
@@ -24,6 +22,7 @@ pause
 exit /b 1
 
 :encontrado
+rem Por defecto, los datos viven en la carpeta data junto a bin.
 if not defined PGSQL_DATA set "PGSQL_DATA=%PGSQL_HOME%\data"
 
 "%PGSQL_HOME%\bin\pg_ctl.exe" status -D "%PGSQL_DATA%" >nul 2>&1

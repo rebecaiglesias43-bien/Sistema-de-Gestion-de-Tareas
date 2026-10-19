@@ -3,25 +3,24 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 /**
- * Singleton que carga y centraliza las variables de entorno de la aplicación.
+ * Configuración de la app, cargada una sola vez.
  *
- * Se encarga de leer el archivo `.env` una única vez y exponer los valores
- * necesarios (puerto, conexión a base de datos y configuración de JWT) de
- * forma tipada al resto del proyecto.
+ * Si falta algo crítico, el proceso falla al arrancar en vez de
+ * arrastrar el error hasta la primera petición.
  */
 class Config {
   private static instance: Config;
 
-  /** Puerto HTTP en el que escucha el servidor. */
+  /** Puerto HTTP. */
   public readonly puerto: number;
 
-  /** Cadena de conexión a PostgreSQL. */
+  /** Cadena de conexión de PostgreSQL. */
   public readonly urlBaseDatos: string;
 
-  /** Secreto usado para firmar y verificar los JSON Web Tokens. */
+  /** Secreto con el que se firman los JWT. */
   public readonly secretoJwt: string;
 
-  /** Tiempo de expiración de los tokens (formato `jsonwebtoken`). */
+  /** Duración del token, en formato de jsonwebtoken (1h, 30m...). */
   public readonly expiracionJwt: string;
 
   private constructor() {
@@ -38,7 +37,7 @@ class Config {
     }
   }
 
-  /** Obtiene la única instancia de la configuración, creándola si no existe. */
+  /** Devuelve la instancia única y la crea la primera vez. */
   public static getInstance(): Config {
     if (!Config.instance) {
       Config.instance = new Config();
@@ -46,6 +45,7 @@ class Config {
     return Config.instance;
   }
 
+  /** Convierte PUERTO a número; si no es válido, corta el arranque. */
   private parsePuerto(valor: string | undefined): number {
     const puerto = Number.parseInt(valor ?? '3000', 10);
     if (Number.isNaN(puerto)) {

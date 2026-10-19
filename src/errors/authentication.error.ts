@@ -1,6 +1,6 @@
 import { AppError } from './app-error';
 
-/** Error que representa un fallo de autenticación o autorización (HTTP 401). */
+/** 401: falta el token, venció o las credenciales no coinciden. */
 export class AuthenticationError extends AppError {
   constructor(message = 'No autenticado o credenciales inválidas') {
     super(401, message);

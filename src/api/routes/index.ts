@@ -3,10 +3,7 @@ import { authRoutes } from './auth.routes';
 import { taskRoutes } from './task.routes';
 
 /**
- * Enrutador raíz que agrupa todas las rutas de la API.
- *
- * Se monta en la raíz de la aplicación, exponiendo los prefijos
- * `/auth` y `/tasks`.
+ * Router raíz: cuelga /auth y /tasks del resto de la app.
  */
 const router = Router();
 

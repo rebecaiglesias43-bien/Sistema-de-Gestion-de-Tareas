@@ -8,10 +8,8 @@ import { errorHandler } from './api/middlewares/error.middleware';
 import { setupSwagger } from './docs/swagger';
 
 /**
- * Punto de entrada de la aplicación.
- *
- * Inicializa la base de datos, configura los middlewares globales, monta las
- * rutas de la API y arranca el servidor HTTP en el puerto configurado.
+ * Arranque de la API: prepara la base, monta middlewares y rutas,
+ * y deja el servidor escuchando en el puerto configurado.
  */
 async function main(): Promise<void> {
   await inicializarBaseDatos();

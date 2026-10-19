@@ -1,9 +1,10 @@
 import { JSONSchemaType } from 'ajv';
 import { CrearTareaInput, ActualizarTareaInput, EstadoTarea } from '../types';
 
+// Deben coincidir con el CHECK de tar_tareas.
 const estados: EstadoTarea[] = ['pendiente', 'en curso', 'completada'];
 
-/** Esquema de validación para la creación de una tarea. */
+/** Body de POST /tasks. */
 export const createTaskSchema: JSONSchemaType<CrearTareaInput> = {
   type: 'object',
   properties: {
@@ -16,7 +17,7 @@ export const createTaskSchema: JSONSchemaType<CrearTareaInput> = {
   additionalProperties: false,
 };
 
-/** Esquema de validación para la actualización (parcial) de una tarea. */
+/** Body de PUT /tasks. Todo opcional: solo se cambia lo que llegue. */
 export const updateTaskSchema: JSONSchemaType<ActualizarTareaInput> = {
   type: 'object',
   properties: {
@@ -28,7 +29,7 @@ export const updateTaskSchema: JSONSchemaType<ActualizarTareaInput> = {
   additionalProperties: false,
 };
 
-/** Esquema para validar parámetros de ruta con un identificador numérico. */
+/** El id de la ruta tiene que ser numérico. */
 export const idParamsSchema: JSONSchemaType<{ id: string }> = {
   type: 'object',
   properties: {

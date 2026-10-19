@@ -4,35 +4,33 @@ import { asyncHandler } from '../utils/async-handler';
 import { CrearTareaInput, ActualizarTareaInput } from '../types';
 
 /**
- * Controlador de tareas.
- *
- * Todas las acciones usan `req.user` (inyectado por el middleware de
- * autenticación) para operar únicamente sobre las tareas del usuario.
+ * Entrada HTTP de tareas.
+ * El id del usuario siempre sale de req.user, nunca del body.
  */
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
-  /** Maneja `POST /tasks`. */
+  /** POST /tasks */
   crear = asyncHandler(async (req: Request, res: Response) => {
     const data = req.body as CrearTareaInput;
     const tarea = await this.taskService.crear(req.user!.id, data);
     res.status(201).json({ tarea });
   });
 
-  /** Maneja `GET /tasks`. */
+  /** GET /tasks */
   listar = asyncHandler(async (req: Request, res: Response) => {
     const tareas = await this.taskService.listar(req.user!.id);
     res.json({ tareas });
   });
 
-  /** Maneja `GET /tasks/:id`. */
+  /** GET /tasks/:id */
   obtener = asyncHandler(async (req: Request, res: Response) => {
     const id = Number.parseInt(req.params.id, 10);
     const tarea = await this.taskService.obtener(id, req.user!.id);
     res.json({ tarea });
   });
 
-  /** Maneja `PUT /tasks/:id`. */
+  /** PUT /tasks/:id */
   actualizar = asyncHandler(async (req: Request, res: Response) => {
     const id = Number.parseInt(req.params.id, 10);
     const data = req.body as ActualizarTareaInput;
@@ -40,7 +38,7 @@ export class TaskController {
     res.json({ tarea });
   });
 
-  /** Maneja `DELETE /tasks/:id`. */
+  /** DELETE /tasks/:id */
   eliminar = asyncHandler(async (req: Request, res: Response) => {
     const id = Number.parseInt(req.params.id, 10);
     await this.taskService.eliminar(id, req.user!.id);

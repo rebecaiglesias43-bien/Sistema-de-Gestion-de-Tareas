@@ -1,7 +1,7 @@
-/** Posibles estados en los que puede encontrarse una tarea. */
+/** Estados válidos de una tarea (los mismos del CHECK). */
 export type EstadoTarea = 'pendiente' | 'en curso' | 'completada';
 
-/** Representa un usuario registrado en el sistema. */
+/** Usuario tal como vive en la base. */
 export interface Usuario {
   id: number;
   nombre: string;
@@ -10,10 +10,10 @@ export interface Usuario {
   creado_en: Date;
 }
 
-/** Usuario listo para exponer en respuestas (sin el hash de la contraseña). */
+/** Usuario sin el hash, para las respuestas. */
 export type UsuarioPublico = Omit<Usuario, 'password'>;
 
-/** Representa una tarea asociada a un usuario. */
+/** Tarea tal como la devuelve la API. */
 export interface Tarea {
   id: number;
   usuario_id: number;
@@ -25,7 +25,7 @@ export interface Tarea {
   actualizado_en: Date;
 }
 
-/** Datos necesarios para crear una tarea. */
+/** Datos para crear una tarea. */
 export interface CrearTareaInput {
   titulo: string;
   descripcion?: string;
@@ -33,7 +33,7 @@ export interface CrearTareaInput {
   estado?: EstadoTarea;
 }
 
-/** Datos opcionales para actualizar una tarea. */
+/** Campos que se pueden cambiar en un PUT. */
 export interface ActualizarTareaInput {
   titulo?: string;
   descripcion?: string;
@@ -41,7 +41,7 @@ export interface ActualizarTareaInput {
   estado?: EstadoTarea;
 }
 
-/** Contenido del JSON Web Token una vez verificado. */
+/** Lo que guardamos dentro del JWT. */
 export interface JwtPayload {
   id: number;
   email: string;

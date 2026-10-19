@@ -1,14 +1,14 @@
 import { AppError } from './app-error';
 
-/** Detalle de un fallo de validación devuelto por AJV. */
+/** Un fallo concreto de AJV, ya traducido. */
 export interface ErrorValidacion {
   campo: string;
   mensaje: string;
 }
 
-/** Error que representa datos de entrada inválidos (HTTP 400). */
+/** 400: los datos de entrada no pasan la validación. */
 export class ValidationError extends AppError {
-  /** Lista de errores concretos detectados durante la validación. */
+  /** Campo y mensaje de cada fallo. */
   public readonly detalles: ErrorValidacion[];
 
   constructor(message = 'Datos de entrada inválidos', detalles: ErrorValidacion[] = []) {

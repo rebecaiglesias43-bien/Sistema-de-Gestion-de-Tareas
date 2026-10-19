@@ -5,25 +5,23 @@ import { UserRepository } from '../persistence/repositories/user.repository';
 import { Usuario, UsuarioPublico } from '../types';
 import { AuthenticationError, ConflictError } from '../errors';
 
-/** Elimina el hash de la contraseña antes de exponer un usuario. */
+/** Quita el hash antes de devolver el usuario al cliente. */
 function toPublico(usuario: Usuario): UsuarioPublico {
   const { password: _password, ...publico } = usuario;
   return publico;
 }
 
-/** Número de rondas de `salt` para bcrypt. */
+/** Coste de bcrypt. 10 es un buen equilibrio para desarrollo. */
 const SALT_ROUNDS = 10;
 
 /**
- * Servicio de autenticación.
- *
- * Contiene la lógica de negocio de registro e inicio de sesión: hasheo de
- * contraseñas con bcrypt y emisión de JSON Web Tokens.
+ * Registro y login.
+ * Aquí viven el hash de contraseñas y la firma del token.
  */
 export class AuthService {
   constructor(private readonly userRepository: UserRepository) {}
 
-  /** Registra un nuevo usuario devolviendo sus datos públicos. */
+  /** Crea el usuario si el correo no está tomado. */
   async registrar(nombre: string, email: string, password: string): Promise<UsuarioPublico> {
     const existente = await this.userRepository.findByEmail(email);
     if (existente) {
@@ -35,7 +33,7 @@ export class AuthService {
     return toPublico(usuario);
   }
 
-  /** Verifica credenciales y devuelve un token JWT junto al usuario. */
+  /** Comprueba credenciales y firma un JWT. */
   async iniciarSesion(email: string, password: string): Promise<{ token: string; usuario: UsuarioPublico }> {
     const usuario = await this.userRepository.findByEmail(email);
     if (!usuario) {

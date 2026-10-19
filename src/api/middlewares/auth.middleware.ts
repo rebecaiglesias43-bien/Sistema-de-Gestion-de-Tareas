@@ -5,10 +5,8 @@ import { JwtPayload } from '../../types';
 import { AuthenticationError } from '../../errors';
 
 /**
- * Middleware que protege rutas privadas.
- *
- * Lee el token de la cabecera `Authorization: Bearer <token>`, verifica su
- * firma y validez, y expone la información del usuario en `req.user`.
+ * Corta la petición si no hay un Bearer válido.
+ * Si el token está bien, deja el usuario en `req.user`.
  */
 export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
   const header = req.headers.authorization;
