@@ -1,132 +1,116 @@
 # Sistema de Gestión de Tareas
 
-API RESTful para registro de usuarios, autenticación y gestión de tareas
-personales, desarrollada con **Node.js + Express + TypeScript** y **PostgreSQL**.
+API para gestionar tareas personales hecha con Node.js, Express y TypeScript,
+usando PostgreSQL como base de datos.
 
-## Descripción
+## Qué hace
 
-La aplicación permite a los usuarios:
+- Los usuarios se pueden registrar e iniciar sesión. La contraseña se guarda
+  hasheada con bcrypt y el login devuelve un JWT.
+- Una vez autenticado, cada usuario puede crear, listar, editar y borrar sus
+  propias tareas. Cada tarea queda ligada a su creador, así que nadie puede ver
+  o modificar tareas de otro usuario.
+- Una tarea tiene: título, descripción, fecha de vencimiento y estado
+  (`pendiente`, `en curso` o `completada`).
 
-- Registrarse e iniciar sesión (contraseñas hasheadas con bcrypt y tokens JWT).
-- Crear, listar, consultar, actualizar y eliminar sus propias tareas.
-- Cada tarea está asociada al usuario que la creó, por lo que ningún usuario
-  puede acceder a las tareas de otro.
+## Estructura
 
-## Arquitectura
-
-El proyecto sigue una **arquitectura en capas** que separa responsabilidades:
+El código está separado por capas para que cada parte tenga una responsabilidad
+clara:
 
 ```
 src/
-├── api/
-│   ├── middlewares/     # Autenticación, validación y manejo de errores
-│   └── routes/          # Definición de rutas y documentación Swagger
-├── config/              # Singleton de variables de entorno (.env)
-├── controllers/         # Traduce peticiones HTTP a llamadas a servicios
-├── docs/                # Configuración de Swagger
-├── errors/              # Clases de error personalizadas
-├── persistence/         # Conexión a BD y repositorios (SQL)
-├── schemas/             # Esquemas de validación (AJV/JSONSchema)
-├── services/            # Lógica de negocio
-├── types/               # Tipos e interfaces de dominio
-└── utils/               # Utilidades (wrapper de controladores async)
+├── api/           Rutas y middlewares (auth, validación, errores)
+├── config/        Variables de entorno (Singleton)
+├── controllers/   Reciben la petición y responden
+├── docs/          Configuración de Swagger
+├── errors/        Clases de error propias
+├── persistence/   Conexión a PostgreSQL y repositorios
+├── schemas/       Validación con AJV/JSONSchema
+├── services/      Lógica de negocio
+├── types/         Tipos de dominio
+└── utils/         Helpers
 ```
 
-Flujo de una petición: `route → middleware → controller → service → repository → PostgreSQL`.
+El flujo de una petición es: ruta → middleware → controller → service →
+repository → base de datos.
 
-### Patrones de diseño utilizados
-
-- **Singleton**: la configuración (`src/config/env.ts`) carga las variables de
-  entorno una única vez.
-- **Repositorios**: aíslan el acceso a datos (SQL) del resto de la aplicación.
-- **Errores personalizados**: `AppError` y subclases (`NotFoundError`,
-  `AuthenticationError`, `ConflictError`, `ValidationError`) manejadas por un
-  middleware centralizado.
-
-## Requisitos previos
+## Requisitos
 
 - Node.js 18 o superior.
-- PostgreSQL en ejecución (base de datos `gestion_tareas` creada).
+- PostgreSQL corriendo con una base de datos llamada `gestion_tareas`.
 
-## Instalación local
+## Instalación
 
 ```bash
-# 1. Clonar el repositorio
 git clone <url-del-repositorio>
 cd "Sistema de Gestion de Tareas"
-
-# 2. Instalar dependencias
 npm install
 ```
 
-## Configuración del archivo `.env`
+## Configurar el `.env`
 
-Copia el archivo de ejemplo y ajusta los valores:
+Copia el archivo de ejemplo:
 
 ```bash
 cp .env.example .env
 ```
 
-Variables disponibles:
+Y edítalo con tus datos. Las variables son:
 
-| Variable          | Descripción                                        | Ejemplo                                                        |
-| ----------------- | -------------------------------------------------- | -------------------------------------------------------------- |
-| `PUERTO`          | Puerto HTTP del servidor                           | `3000`                                                         |
-| `URL_BASE_DATOS`  | Cadena de conexión a PostgreSQL                    | `postgresql://usuario:pass@localhost:5432/gestion_tareas`      |
-| `SECRETO_JWT`     | Secreto para firmar los tokens JWT                 | un valor largo y aleatorio                                     |
-| `EXPIRACION_JWT`  | Tiempo de expiración del token                     | `1h`                                                           |
+- `PUERTO`: puerto del servidor (por defecto `3000`).
+- `URL_BASE_DATOS`: cadena de conexión a PostgreSQL, por ejemplo
+  `postgresql://usuario:contraseña@localhost:5432/gestion_tareas`.
+- `SECRETO_JWT`: clave para firmar los tokens.
+- `EXPIRACION_JWT`: cuánto dura el token (ej. `1h`).
 
-> Las tablas se crean automáticamente al iniciar la aplicación
-> (`CREATE TABLE IF NOT EXISTS` en `src/persistence/db.ts`).
+Las tablas se crean solas al arrancar, no hace falta correr ningún script.
 
-## Ejecutar el proyecto
+## Correr el proyecto
 
 ```bash
-# Modo desarrollo (reinicio automático con ts-node-dev)
-npm run dev
-
-# Compilar a JavaScript (genera ./dist)
-npm run build
-
-# Ejecutar la versión compilada
-npm start
+npm run dev      # modo desarrollo, se reinicia solo al guardar
+npm run build    # compila a ./dist
+npm start        # corre la versión compilada
 ```
 
-El servidor estará disponible en `http://localhost:3000`.
+El servidor queda en `http://localhost:3000`.
 
-## Documentación de la API (Swagger)
+### Iniciar PostgreSQL en Windows (opcional)
 
-Con el servidor en ejecución, abre: <http://localhost:3000/api-docs>
+Si usas una instalación local o portable de PostgreSQL y no corre como servicio
+de Windows, puedes levantarlo con:
+
+```bat
+scripts\iniciar-bd.bat
+```
+
+El script busca PostgreSQL en la variable `PGSQL_HOME` y, si no está definida,
+en `C:\Program Files\PostgreSQL\18` (y versiones anteriores). Para una
+instalación portable, define la variable antes de ejecutarlo:
+
+```bat
+set PGSQL_HOME=%USERPROFILE%\Desktop\pgsql
+scripts\iniciar-bd.bat
+```
+
+Si PostgreSQL ya está corriendo (por ejemplo, como servicio), el script no hace
+nada. No es necesario en Linux ni macOS.
 
 ## Endpoints
 
-### Autenticación
+- `POST /auth/register` — crea un usuario.
+- `POST /auth/login` — devuelve el token.
 
-| Método | Ruta              | Descripción                    | Auth |
-| ------ | ----------------- | ------------------------------ | ---- |
-| POST   | `/auth/register`  | Registra un nuevo usuario      | No   |
-| POST   | `/auth/login`     | Inicia sesión y devuelve JWT   | No   |
+Con el token en la cabecera `Authorization: Bearer <token>`:
 
-### Tareas (requieren token JWT)
+- `POST /tasks` — crea una tarea.
+- `GET /tasks` — lista tus tareas.
+- `GET /tasks/:id` — una tarea.
+- `PUT /tasks/:id` — edita una tarea.
+- `DELETE /tasks/:id` — borra una tarea.
 
-| Método | Ruta          | Descripción                              | Auth |
-| ------ | ------------- | ---------------------------------------- | ---- |
-| POST   | `/tasks`      | Crea una tarea                           | Sí   |
-| GET    | `/tasks`      | Lista las tareas del usuario             | Sí   |
-| GET    | `/tasks/:id`  | Obtiene una tarea del usuario            | Sí   |
-| PUT    | `/tasks/:id`  | Actualiza una tarea del usuario          | Sí   |
-| DELETE | `/tasks/:id`  | Elimina una tarea del usuario            | Sí   |
+## Documentación
 
-Los endpoints protegidos requieren la cabecera:
-
-```
-Authorization: Bearer <token>
-```
-
-## Scripts
-
-| Comando         | Descripción                          |
-| --------------- | ------------------------------------ |
-| `npm run dev`   | Ejecuta en modo desarrollo           |
-| `npm run build` | Compila TypeScript a `./dist`        |
-| `npm start`     | Ejecuta la versión compilada         |
+La documentación de Swagger está en `http://localhost:3000/api-docs` con el
+servidor corriendo.

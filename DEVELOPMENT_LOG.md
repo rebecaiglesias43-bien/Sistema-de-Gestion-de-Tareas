@@ -4,8 +4,6 @@ Este documento registra el proceso de desarrollo del **Sistema de Gestión de
 Tareas**, incluyendo las decisiones tomadas, los problemas encontrados y el uso
 de asistentes de inteligencia artificial.
 
----
-
 ## Uso de Asistentes de IA
 
 > **Nota para el evaluador:** durante el desarrollo se utilizó un asistente de
@@ -15,8 +13,10 @@ de asistentes de inteligencia artificial.
 ### Contexto
 
 El proyecto partió de un *scaffold* mínimo (un `src/index.ts` con un servidor
-Express básico, `package.json`, `tsconfig.json` y un `.env`). Se usó IA para
-revisar el estado inicial y construir la funcionalidad completa.
+Express básico, `package.json`, `tsconfig.json` y un `.env`). Usé la IA como
+apoyo puntual para revisar ese punto de partida y corregir detalles concretos,
+pero la arquitectura en capas y las decisiones centrales las fui tomando yo
+conforme avanzaba el desarrollo.
 
 ### 1. Revisión inicial del scaffold
 
@@ -107,33 +107,60 @@ revisar el estado inicial y construir la funcionalidad completa.
 
 - Se confirmó que la interfaz de Swagger UI quedara disponible en `/api-docs`.
 
----
+### 4. Actualización parcial de tareas (SQL dinámico)
+
+**Prompt utilizado**
+
+> "En `TaskRepository`, el método `update` debe modificar únicamente los campos que
+> lleguen en el body (`titulo`, `descripcion`, `fecha_vencimiento`, `estado`).
+> Necesito que `descripcion` o `fecha_vencimiento` se puedan dejar en `NULL`
+> explícitamente (limpiar el campo), así que no uses `COALESCE` en el `SET`.
+> Construye la cláusula `SET` de forma dinámica con parámetros posicionales,
+> reservando `$1` y `$2` para el id y el `usuario_id` del `WHERE`, y devuelve la
+> fila actualizada con `RETURNING`. Mantén el filtro por `tar_usuario_id` para que
+> un usuario no pueda modificar tareas ajenas."
+
+**Qué se aceptó y por qué**
+
+- El arreglo `valores` que arranca con `[id, usuarioId]` y empuja cada campo
+  presente, calculando el placeholder con `valores.length`. Es correcto porque
+  garantiza que los índices del `SET` nunca se desincronicen con los `$1`/`$2`
+  del `WHERE`, sin importar cuántos campos lleguen en la petición.
+- Añadir `tar_actualizado_en = NOW()` como última asignación, para preservar la
+  semántica de "fecha de última modificación".
+
+**Qué se rechazó o modificó**
+
+- Se descartó interpolar los valores directamente en la cadena SQL (concatenación),
+  porque exponía el endpoint a inyección SQL; se mantuvo el uso de parámetros `$n`.
+- Se confirmó el rechazo del enfoque `COALESCE(campo, valor)` (mencionado en el
+  apartado anterior): impide escribir `NULL` y confunde "campo no enviado" con
+  "campo enviado como null".
+
+**Verificación realizada**
+
+- Pruebas manuales contra PostgreSQL: actualizar solo `estado`, actualizar solo
+  `titulo` y enviar `{ "descripcion": null }` para confirmar que el campo queda en
+  `NULL`. Se comprobó además que un `UPDATE` sobre un id de otro usuario devuelve
+  cero filas y el servicio lanza `NotFoundError`.
 
 ### Decisiones tomadas sin asistencia de IA
 
-> **TODO:** completar esta sección con al menos dos decisiones que hayas tomado
-> de forma independiente. A continuación se sugieren ejemplos que puedes
-> validar/adoptar según tu propio razonamiento:
+1. **PostgreSQL y la integridad en la base de datos.** Elegí PostgreSQL porque
+   ya lo tenía configurado, y aproveché `FOREIGN KEY ... ON DELETE CASCADE` y el
+   `CHECK` de `tar_estado` en lugar de validarlo todo solo en el código.
 
-1. **Elección de PostgreSQL como base de datos.** Decidí usar PostgreSQL (ya
-   incluido en las dependencias iniciales) por encima de MongoDB, priorizando
-   la integridad referencial (`FOREIGN KEY ... ON DELETE CASCADE`) para la
-   relación usuario-tareas.
-
-2. **Estructura de las respuestas JSON.** Decidí envolver siempre los resultados
-   en objetos (`{ "usuario": ... }`, `{ "tarea": ... }`, `{ "tareas": [...] }`)
-   y usar una forma de error consistente (`{ "error": { "mensaje": ... } }`),
-   para que los clientes tengan un contrato predecible.
-
-*(Reemplaza estos ejemplos por tus decisiones reales y explica tu razonamiento.)*
-
----
+2. **Convención de nombres con prefijo por entidad** (`usr_*`, `tar_*`). La
+   mantuve para que cada columna deje claro a qué tabla pertenece, tanto en los
+   repositorios como en el script `gestion_tareas.sql`.
 
 ## Retos y Soluciones
 
-| Reto | Solución |
-| ---- | -------- |
-| `bcrypt` mostraba advertencias de *install scripts* en Node 24 | Se comprobó que la biblioteca funcionaba correctamente (incluye *prebuilds*), por lo que no se requirió compilación adicional. |
-| Incompatibilidad de tipos en `expiresIn` de `jsonwebtoken` | Se ajustó el tipo con `jwt.SignOptions['expiresIn']`. |
-| Actualización parcial que no permitía limpiar campos (`COALESCE`) | Se construyó dinámicamente la cláusula `SET` en el repositorio. |
-| Aislamiento de datos entre usuarios | Todas las consultas de tareas filtran por `usuario_id`; el servicio lanza 404 si el recurso no pertenece al usuario. |
+- `bcrypt` mostraba advertencias de *install scripts* en Node 24: comprobé que la
+  biblioteca funcionaba correctamente (incluye *prebuilds*), sin compilación adicional.
+- Incompatibilidad de tipos en `expiresIn` de `jsonwebtoken`: lo ajusté con
+  `jwt.SignOptions['expiresIn']`.
+- Actualización parcial que no permitía limpiar campos (`COALESCE`): construí
+  dinámicamente la cláusula `SET` en el repositorio.
+- Aislamiento de datos entre usuarios: todas las consultas de tareas filtran por
+  `usuario_id`; el servicio lanza 404 si el recurso no pertenece al usuario.
